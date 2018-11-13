@@ -19,7 +19,7 @@ bi_t5: .word 0 : 100
 j main
 
 # Initializes a new big integer
-# $a0 - no. of bytes
+# $a0 - no. of words
 make_bi:
 	addi $a0, $a0, 1
 	mul $a0, $a0, 4		# convert to number of bytes
@@ -37,11 +37,12 @@ make_bi_100:
 	jr $ra
 
 
-# Makes a big integer from a string of integers
-# $a0 - address of array
-# $a1 - size of array
+# Makes a big integer from a string
+# $a0 - address of string
 make_bi_from_str:
-	jr $ra	
+	
+	jr $ra
+
 
 add_bi_bi:
 	jr $ra	
@@ -58,5 +59,7 @@ comp_bi_bi:
 main:
 	la $t0, bi_a
 	la $t1, bi_b
-	
+	li   $v0, 10          # system call for exit
+	syscall
+
 	
