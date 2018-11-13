@@ -65,23 +65,165 @@ ascii_to_int:
 	jr $ra
 
 
+# # # Makes a big integer from a string
+# # # $a0 - address of string
+# # # $a1 - length of string
+# # make_bi_from_str:
+# # 	# $t0 - bi
+# # 	addi $sp, $sp, -24
+# # 	sw $ra, 0($sp)
+# # 	sw $s0, 4($sp)
+# # 	sw $s1, 8($sp)
+# # 	sw $s2, 12($sp)
+# # 	sw $s3, 16($sp)
+# # 	sw $s4, 20($sp)
+# # 	move $s0, $a0
+# # 	move $s1, $a1
+	
+# # 	# make_bi with length given
+# # 	move $a0, $a1
+# # 	jal make_bi
+# # 	# Save address of bi in $s3
+# # 	move $s3, $v0
+# # 	# get size in $s2
+# # 	lw $s2, 0($s3)
+
+# # 	# s4 - points to the last byte in array
+# # 	addi $s4, $v0, 3
+# # 	add $s4, $s4, $s2
+
+# # 	make_bi_from_str_loop_begin:
+# # 		# if $s1 <= 0, break_loop
+# # 		slti $t0, $s1, 1
+# # 		# if ($s1 < 1) != 0, break_loop
+# # 		bne $t0, $0, make_bi_from_str_break_loop
+# # 		addi $s1, $s1, -1
+# # 		# t2 - Address of character to copy
+# # 		add $t2, $s0, $s1
+# # 		# Load char into $a0
+# # 		lb $a0, 0($t2)
+# # 		# Convert to int
+# # 		jal ascii_to_int
+# # 		# Store int in the last byte in array
+# # 		sb $v0, 0($s4)
+# # 		addi $s4, $s4, -1
+# # 		j make_bi_from_str_loop_begin
+
+# # 	make_bi_from_str_break_loop:
+# # 	# move $t0, $v0
+# # 	# Return address of bi
+# # 	move $v0, $s3
+# # 	lw $s4, 20($sp)
+# # 	lw $s3, 16($sp)
+# # 	lw $s2, 12($sp)
+# # 	lw $s1, 8($sp)
+# # 	lw $s0, 4($sp)
+# # 	lw $ra, 0($sp)
+# # 	addi $sp, $sp, 24
+# # 	jr $ra
+
+
+# # Makes a big integer from a string
+# # $a0 - address of string
+# # $a1 - length of string
+# make_bi_from_str:
+# 	# $t0 - bi
+# 	addi $sp, $sp, -28
+# 	sw $ra, 0($sp)
+# 	sw $s0, 4($sp)
+# 	sw $s1, 8($sp)
+# 	sw $s2, 12($sp)
+# 	sw $s3, 16($sp)
+# 	sw $s4, 20($sp)
+# 	sw $s5, 24($sp)
+# 	move $s0, $a0
+# 	move $s1, $a1
+	
+# 	# make_bi with half the length given
+# 	addi $a0, $a1, 1
+# 	div $s4, $a0, 2
+# 	move $a0, $s4
+# 	jal make_bi
+# 	# Save address of bi in $s3
+# 	move $s3, $v0
+# 	# get size in $s2
+# 	lw $s2, 0($s3)
+
+# 	# s4 - points to the last byte in array
+# 	add $s4, $v0, $s4
+# 	addi $s4, $s4, 3
+	
+
+# 	# Parity bit for loop
+# 	andi $s5, $s1, 1
+# 	# xori $s5, 1
+# 	# move $s5, $0
+
+# 	make_bi_from_str_loop_begin:
+# 		# if $s1 <= 0, break_loop
+# 		slti $t0, $s1, 1
+# 		# if ($s1 < 1) != 0, break_loop
+# 		bne $t0, $0, make_bi_from_str_break_loop
+# 		addi $s1, $s1, -1
+# 		# t2 - Address of character to copy
+# 		add $t2, $s0, $s1
+# 		# Load char into $a0
+# 		lb $a0, 0($t2)
+# 		# Convert to int
+# 		jal ascii_to_int
+# 		# Store int in the last byte of array if parity bit is 0
+# 		bne $s5, $0, make_bi_from_str_else1
+# 			sb $v0, 0($s4)
+# 			li $s5, 1
+# 			j make_bi_from_str_after_else1
+# 		# Else store it in the upper half of the byte
+# 		make_bi_from_str_else1:
+# 			lb $t0, 0($s4)
+# 			mul $v0, $v0, 16
+# 			add $t0, $t0, $v0
+# 			sb $t0, 0($s4)
+# 			addi $s4, $s4, -1
+# 			li $s5, 0
+# 		make_bi_from_str_after_else1:
+
+# 		j make_bi_from_str_loop_begin
+
+# 	make_bi_from_str_break_loop:
+# 	# move $t0, $v0
+# 	# Return address of bi
+# 	move $v0, $s3
+# 	sw $s5, 24($sp)
+# 	lw $s4, 20($sp)
+# 	lw $s3, 16($sp)
+# 	lw $s2, 12($sp)
+# 	lw $s1, 8($sp)
+# 	lw $s0, 4($sp)
+# 	lw $ra, 0($sp)
+# 	addi $sp, $sp, 28
+# 	jr $ra
+
+
 # Makes a big integer from a string
 # $a0 - address of string
 # $a1 - length of string
 make_bi_from_str:
 	# $t0 - bi
-	addi $sp, $sp, -24
+	addi $sp, $sp, -32
 	sw $ra, 0($sp)
 	sw $s0, 4($sp)
 	sw $s1, 8($sp)
 	sw $s2, 12($sp)
 	sw $s3, 16($sp)
 	sw $s4, 20($sp)
+	sw $s5, 24($sp)
+	sw $s6, 28($sp)
 	move $s0, $a0
 	move $s1, $a1
 	
-	# make_bi with length given
-	move $a0, $a1
+	# make_bi with half the length given
+	addi $a0, $a1, 1
+	div $s4, $a0, 2
+	move $a0, $s4
 	jal make_bi
 	# Save address of bi in $s3
 	move $s3, $v0
@@ -89,8 +231,17 @@ make_bi_from_str:
 	lw $s2, 0($s3)
 
 	# s4 - points to the last byte in array
-	addi $s4, $v0, 3
-	add $s4, $s4, $s2
+	add $s4, $v0, $s4
+	addi $s4, $s4, 3
+	
+
+	# Parity bit for loop
+	andi $s5, $s1, 1
+	# xori $s5, 1
+	# move $s5, $0
+
+	# Index of character to copy 
+	move $s6, $0
 
 	make_bi_from_str_loop_begin:
 		# if $s1 <= 0, break_loop
@@ -99,28 +250,46 @@ make_bi_from_str:
 		bne $t0, $0, make_bi_from_str_break_loop
 		addi $s1, $s1, -1
 		# t2 - Address of character to copy
-		add $t2, $s0, $s1
+		add $t2, $s0, $s6
+		addi $s6, $s6, 1
 		# Load char into $a0
 		lb $a0, 0($t2)
 		# Convert to int
 		jal ascii_to_int
-		# Store int in the last byte in array
-		sb $v0, 0($s4)
-		addi $s4, $s4, -1
+		# Store int in the last byte of array if parity bit is 0
+		bne $s5, $0, make_bi_from_str_else1
+			lb $t0, 0($s4)
+			mul $v0, $v0, 16
+			add $t0, $t0, $v0
+			sb $t0, 0($s4)
+			li $s5, 1
+			j make_bi_from_str_after_else1
+		# Else store it in the upper half of the byte
+		make_bi_from_str_else1:
+			lb $t0, 0($s4)
+			add $t0, $t0, $v0
+			sb $t0, 0($s4)
+			addi $s4, $s4, -1
+			li $s5, 0
+		make_bi_from_str_after_else1:
+
 		j make_bi_from_str_loop_begin
 
 	make_bi_from_str_break_loop:
 	# move $t0, $v0
 	# Return address of bi
 	move $v0, $s3
+	lw $s6, 28($sp)
+	lw $s5, 24($sp)
 	lw $s4, 20($sp)
 	lw $s3, 16($sp)
 	lw $s2, 12($sp)
 	lw $s1, 8($sp)
 	lw $s0, 4($sp)
 	lw $ra, 0($sp)
-	addi $sp, $sp, 16
+	addi $sp, $sp, 32
 	jr $ra
+
 
 
 add_bi_bi:
