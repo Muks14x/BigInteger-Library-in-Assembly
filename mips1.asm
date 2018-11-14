@@ -1,7 +1,8 @@
 .data
-bi_a: .asciiz "0123456789abc"
+#bi_a: .asciiz "0123456789abc"
+bi_a: .asciiz "1111111111111"
 len_a: .word 13
-bi_b: .asciiz "11000000000000001"
+bi_b: .asciiz "22222222222222222"
 len_b: .word 17
 ch: .ascii "0"
 .text
@@ -268,6 +269,142 @@ print_bi:
 	jr $ra
 
 
+# $a0 - address of bi
+set_bi_zero:
+	addi $sp, $sp, -12
+	sw $ra, 0($sp)
+	sw $s0, 4($sp)
+	sw $s1, 8($sp)
+	move $s1, $a0
+	# load last byte address into $s0
+	lw $s0, 0($s0)
+	add $s0, $s0, $s1
+	# while s1 < s0, set 0($s0) to 0
+	set_bi_loop1:
+	slt $t0, $s1, $s0
+	beq $t0, $0, set_bi_break_loop
+	# Set last byte to 0
+	sw $0, 0($s0)
+	addi $s0, $s0, -4
+	j set_bi_loop1
+	set_bi_break_loop:
+	lw $s1, 8($sp)
+	lw $s0, 4($sp)
+	lw $ra, 0($sp)
+	addi $sp, $sp, -12
+	jr $ra
+
+
+# $a0 - first bi
+# $a1 - second bi
+mult_bi_bi:
+	addi $sp, $sp, -36
+	sw $ra, 0($sp)
+	sw $s0, 4($sp)
+	sw $s1, 8($sp)
+	sw $s2, 12($sp)
+	sw $s3, 16($sp)
+	sw $s4, 20($sp)
+	sw $s5, 24($sp)
+	sw $s6, 28($sp)
+	sw $s7, 32($sp)
+
+	move $s0, $a0
+	move $s1, $a1
+	# get the two sizes
+	lw $s3, 0($s0)
+	lw $s4, 0($s1)
+	# make new bi with sum of sizes
+	add $a0, $s3, $s4
+	jal make_bi
+	move $s2, $v0
+	lw $s5, 0($s2)
+	move $a0, $s2
+	jal set_bi_zero
+	# Convert sizes to words
+	div $s3, $s3, 4
+	div $s4, $s4, 4
+	div $s5, $s5, 4
+
+	# $s0, $s1, $s2 - addresses of the bi's
+	## addi $s0, $s0, 1
+	## addi $s1, $s1, 1
+	## addi $s2, $s2, 1
+	# $s3, $s4, $s5 - sizes of the bi's
+	# $s6, $s7 - i, j - loop vars
+	move $s6, $0
+	# while $s6 < $s3, i++
+	slt $t0, $s6, $s3
+	mult_bi_bi_outer_loop_begin:
+	beq $t0, $0, mult_bi_bi_after_outer_loop
+		# incrementing in the beginning, 
+		#  since array access is 1 indexed
+		addi $s6, $s6, 1
+		add $t1, $s0, $s6
+		# t2 - digit from s0
+		lw $t2, 0($t1)
+		# a0 - prev_carry
+		move $a0, $0
+		# j=0
+		move $s7, $0
+		# while $s7 < $s3, ++j
+		mult_bi_bi_inner_loop_begin:
+		slt $t0, $s7, $s3
+		beq $t0, $0, mult_bi_bi_after_inner_loop
+			# incrementing in the beginning, 
+			#  since array access is 1 indexed
+			addi $s7, $s7, 1
+			add $t1, $s1, $s7
+			# a2 - digit from s1
+			lw $a2, 0($t1)
+			# a2 - lo of product
+			mul $a2, $t2, $a2
+			# t5 - hi of product
+			mfhi $t5
+			# a1 : address and then data of the 
+			#  [i + j - 1]'th element of the result bi
+			add $a1, $s2, $s6
+			add $a1, $a1, $s7
+			addi $a1, $a1, -1
+			# load data
+			lw $a1, 0($a1)
+			addi $sp, $sp, -8
+			sw $t2, 0($sp)
+			sw $t5, 4($sp)
+			jal add_3_words
+			# Now the new carry is still in $a0
+			lw $t5, 4($sp)
+			lw $t2, 0($sp)
+			addi $sp, $sp, 8
+			# Put sum in [i + j - 1]'th element of the result bi
+			add $a1, $s2, $s6
+			add $a1, $a1, $s7
+			addi $a1, $a1, -1
+			sw $v0, 0($a1)
+
+			# Add carry from mul to current carry
+			add $a0, $a0, $t5
+		j mult_bi_bi_inner_loop_begin
+		mult_bi_bi_after_inner_loop:
+		j mult_bi_bi_outer_loop_begin
+	mult_bi_bi_after_outer_loop:
+
+	# Return the address of the new bi
+	move $v0, $s2
+
+	lw $s7, 32($sp)
+	lw $s6, 28($sp)
+	lw $s5, 24($sp)
+	lw $s4, 20($sp)
+	lw $s3, 16($sp)
+	lw $s2, 12($sp)
+	lw $s1, 8($sp)
+	lw $s0, 4($sp)
+	lw $ra, 0($sp)
+	addi $sp, $sp, 36
+	jr $ra
+
+
 main:
       #la $a0, ch
       #lb $a0, 0($a0)
@@ -281,7 +418,8 @@ main:
       move $s0, $v0
       
       move $a0, $s0
-      jal print_bi
+      #jal print_bi
+      #jal set_bi_zero
 
       la $a0, bi_b
       la $a1, len_b
@@ -291,7 +429,8 @@ main:
       
       move $a0, $s0
       move $a1, $s1
-      jal add_bi_bi
+      # jal add_bi_bi
+      jal mult_bi_bi
       
 	li   $v0, 10          # system call for exit
 	syscall
