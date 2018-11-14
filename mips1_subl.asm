@@ -1,19 +1,4 @@
 .data
-arr: 
-
-bi_0: .word 0 : 100
-bi_1: .word 0 : 100
-bi_2: .word 0 : 100
-bi_3: .word 0 : 100
-bi_4: .word 0 : 100
-bi_5: .word 0 : 100
-
-bi_t0: .word 0 : 100
-bi_t1: .word 0 : 100
-bi_t2: .word 0 : 100
-bi_t3: .word 0 : 100
-bi_t4: .word 0 : 100
-bi_t5: .word 0 : 100
 
 .text
 j main
@@ -171,16 +156,20 @@ print_bi:
 	sw $s0, 4($sp)
 	sw $s1, 8($sp)
 	move $s1, $a0
-	# load last byte address into $s0
+	# load last word address into $s0
 	lw $s0, 0($s1)
 	add $s0, $s0, $s1
 	# while s1 < s0, print 0($s0)
 	print_bi_loop1:
 	slt $t0, $s1, $s0
 	beq $t0, $0, print_bi_break_loop
-	# Print last byte
+	# Print last word
 	lw $a0, 0($s0)
 	li $v0, 34
+	syscall
+	# Print a space between words
+	li $a0, ' '
+	li $v0, 11
 	syscall
 	addi $s0, $s0, -4
 	j print_bi_loop1
