@@ -291,7 +291,7 @@ set_bi_zero:
 	lw $s1, 8($sp)
 	lw $s0, 4($sp)
 	lw $ra, 0($sp)
-	addi $sp, $sp, -12
+	addi $sp, $sp, 12
 	jr $ra
 
 
@@ -321,10 +321,10 @@ mult_bi_bi:
 	lw $s5, 0($s2)
 	move $a0, $s2
 	jal set_bi_zero
-	# Convert sizes to words
-	div $s3, $s3, 4
-	div $s4, $s4, 4
-	div $s5, $s5, 4
+	# # Convert sizes to words
+	# div $s3, $s3, 4
+	# div $s4, $s4, 4
+	# div $s5, $s5, 4
 
 	# $s0, $s1, $s2 - addresses of the bi's
 	## addi $s0, $s0, 1
@@ -332,14 +332,14 @@ mult_bi_bi:
 	## addi $s2, $s2, 1
 	# $s3, $s4, $s5 - sizes of the bi's
 	# $s6, $s7 - i, j - loop vars
-	move $s6, $0
+	li $s6, 0
 	# while $s6 < $s3, i++
-	slt $t0, $s6, $s3
 	mult_bi_bi_outer_loop_begin:
+	slt $t0, $s6, $s3
 	beq $t0, $0, mult_bi_bi_after_outer_loop
 		# incrementing in the beginning, 
 		#  since array access is 1 indexed
-		addi $s6, $s6, 1
+		addi $s6, $s6, 4
 		add $t1, $s0, $s6
 		# t2 - digit from s0
 		lw $t2, 0($t1)
@@ -349,11 +349,11 @@ mult_bi_bi:
 		move $s7, $0
 		# while $s7 < $s3, ++j
 		mult_bi_bi_inner_loop_begin:
-		slt $t0, $s7, $s3
+		slt $t0, $s7, $s4
 		beq $t0, $0, mult_bi_bi_after_inner_loop
 			# incrementing in the beginning, 
 			#  since array access is 1 indexed
-			addi $s7, $s7, 1
+			addi $s7, $s7, 4
 			add $t1, $s1, $s7
 			# a2 - digit from s1
 			lw $a2, 0($t1)
@@ -365,7 +365,7 @@ mult_bi_bi:
 			#  [i + j - 1]'th element of the result bi
 			add $a1, $s2, $s6
 			add $a1, $a1, $s7
-			addi $a1, $a1, -1
+			addi $a1, $a1, -4
 			# load data
 			lw $a1, 0($a1)
 			addi $sp, $sp, -8
@@ -379,7 +379,7 @@ mult_bi_bi:
 			# Put sum in [i + j - 1]'th element of the result bi
 			add $a1, $s2, $s6
 			add $a1, $a1, $s7
-			addi $a1, $a1, -1
+			addi $a1, $a1, -4
 			sw $v0, 0($a1)
 
 			# Add carry from mul to current carry
