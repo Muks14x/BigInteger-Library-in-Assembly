@@ -172,7 +172,7 @@ print_bi:
 	sw $s1, 8($sp)
 	move $s1, $a0
 	# load last byte address into $s0
-	lw $s0, 0($s0)
+	lw $s0, 0($s1)
 	add $s0, $s0, $s1
 	# while s1 < s0, print 0($s0)
 	print_bi_loop1:
@@ -188,7 +188,7 @@ print_bi:
 	lw $s1, 8($sp)
 	lw $s0, 4($sp)
 	lw $ra, 0($sp)
-	addi $sp, $sp, -12
+	addi $sp, $sp, 12
 	jr $ra
 
 
@@ -200,7 +200,7 @@ set_bi_zero:
 	sw $s1, 8($sp)
 	move $s1, $a0
 	# load last byte address into $s0
-	lw $s0, 0($s0)
+	lw $s0, 0($s1)
 	add $s0, $s0, $s1
 	# while s1 < s0, set 0($s0) to 0
 	set_bi_loop1:

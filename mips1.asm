@@ -153,6 +153,62 @@ add_3_words:
 	addu $a0, $t0, $t2     # Add carry bits
 	jr $ra
 
+
+# $a0 - address of bi
+print_bi:
+	addi $sp, $sp, -12
+	sw $ra, 0($sp)
+	sw $s0, 4($sp)
+	sw $s1, 8($sp)
+	move $s1, $a0
+	# load last byte address into $s0
+	lw $s0, 0($s1)
+	add $s0, $s0, $s1
+	# while s1 < s0, print 0($s0)
+	print_bi_loop1:
+	slt $t0, $s1, $s0
+	beq $t0, $0, print_bi_break_loop
+	# Print last byte
+	lw $a0, 0($s0)
+	li $v0, 34
+	syscall
+	addi $s0, $s0, -4
+	j print_bi_loop1
+	print_bi_break_loop:
+	lw $s1, 8($sp)
+	lw $s0, 4($sp)
+	lw $ra, 0($sp)
+	addi $sp, $sp, 12
+	jr $ra
+
+
+# $a0 - address of bi
+set_bi_zero:
+	addi $sp, $sp, -12
+	sw $ra, 0($sp)
+	sw $s0, 4($sp)
+	sw $s1, 8($sp)
+	move $s1, $a0
+	# load last byte address into $s0
+	lw $s0, 0($s1)
+	add $s0, $s0, $s1
+	# while s1 < s0, set 0($s0) to 0
+	set_bi_loop1:
+	slt $t0, $s1, $s0
+	beq $t0, $0, set_bi_break_loop
+	# Set last byte to 0
+	sw $0, 0($s0)
+	addi $s0, $s0, -4
+	j set_bi_loop1
+	set_bi_break_loop:
+	lw $s1, 8($sp)
+	lw $s0, 4($sp)
+	lw $ra, 0($sp)
+	addi $sp, $sp, 12
+	jr $ra
+
+
+
 # $a0 - first bi
 # $a1 - second bi
 add_bi_bi:
@@ -241,59 +297,8 @@ add_bi_bi:
 	addi $sp, $sp, 32
 	jr $ra
 
-# $a0 - address of bi
-print_bi:
-	addi $sp, $sp, -12
-	sw $ra, 0($sp)
-	sw $s0, 4($sp)
-	sw $s1, 8($sp)
-	move $s1, $a0
-	# load last byte address into $s0
-	lw $s0, 0($s0)
-	add $s0, $s0, $s1
-	# while s1 < s0, print 0($s1)
-	print_bi_loop1:
-	slt $t0, $s1, $s0
-	beq $t0, $0, print_bi_break_loop
-	# Print last byte
-	lw $a0, 0($s0)
-	li $v0, 34
-	syscall
-	addi $s0, $s0, -4
-	j print_bi_loop1
-	print_bi_break_loop:
-	lw $s1, 8($sp)
-	lw $s0, 4($sp)
-	lw $ra, 0($sp)
-	addi $sp, $sp, -12
+sub_bi_bi:
 	jr $ra
-
-
-# $a0 - address of bi
-set_bi_zero:
-	addi $sp, $sp, -12
-	sw $ra, 0($sp)
-	sw $s0, 4($sp)
-	sw $s1, 8($sp)
-	move $s1, $a0
-	# load last byte address into $s0
-	lw $s0, 0($s0)
-	add $s0, $s0, $s1
-	# while s1 < s0, set 0($s0) to 0
-	set_bi_loop1:
-	slt $t0, $s1, $s0
-	beq $t0, $0, set_bi_break_loop
-	# Set last byte to 0
-	sw $0, 0($s0)
-	addi $s0, $s0, -4
-	j set_bi_loop1
-	set_bi_break_loop:
-	lw $s1, 8($sp)
-	lw $s0, 4($sp)
-	lw $ra, 0($sp)
-	addi $sp, $sp, 12
-	jr $ra
-
 
 # $a0 - first bi
 # $a1 - second bi
@@ -431,6 +436,13 @@ main:
       move $a1, $s1
       # jal add_bi_bi
       jal mult_bi_bi
+      
+      move $s2, $v0
+      move $a0, $v0
+      jal print_bi
+      
+      move $a0, $s2
+      jal set_bi_zero
       
 	li   $v0, 10          # system call for exit
 	syscall
