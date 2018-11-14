@@ -163,6 +163,34 @@ add_3_words:
 	addu $a0, $t0, $t2     # Add carry bits
 	jr $ra
 
+# $a0 - address of bi
+print_bi:
+	addi $sp, $sp, -12
+	sw $ra, 0($sp)
+	sw $s0, 4($sp)
+	sw $s1, 8($sp)
+	move $s1, $a0
+	# load last byte address into $s0
+	lw $s0, 0($s0)
+	add $s0, $s0, $s1
+	# while s1 < s0, print 0($s1)
+	print_bi_loop1:
+	slt $t0, $s1, $s0
+	beq $t0, $0, print_bi_break_loop
+	# Print last byte
+	lw $a0, 0($s0)
+	li $v0, 34
+	syscall
+	addi $s0, $s0, -4
+	j print_bi_loop1
+	print_bi_break_loop:
+	lw $s1, 8($sp)
+	lw $s0, 4($sp)
+	lw $ra, 0($sp)
+	addi $sp, $sp, -12
+	jr $ra
+
+
 # $a0 - first bi
 # $a1 - second bi
 add_bi_bi:
