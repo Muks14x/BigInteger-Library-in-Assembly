@@ -1,7 +1,9 @@
 .data
-bi_a: .asciiz "0123456789abcdef"
+bi_a: .asciiz "0123456789abc"
+len_a: .word 13
+bi_b: .asciiz "11000000000000001"
+len_b: .word 17
 ch: .ascii "0"
-len: .word 16
 .text
 j main
 
@@ -50,64 +52,6 @@ ascii_to_int:
 	ascii_to_int_if3:
 	addi $v0, $a0, -48
 	jr $ra
-
-
-# # Makes a big integer from a string
-# # $a0 - address of string
-# # $a1 - length of string
-# make_bi_from_str:
-# 	# $t0 - bi
-# 	addi $sp, $sp, -24
-# 	sw $ra, 0($sp)
-# 	sw $s0, 4($sp)
-# 	sw $s1, 8($sp)
-# 	sw $s2, 12($sp)
-# 	sw $s3, 16($sp)
-# 	sw $s4, 20($sp)
-# 	move $s0, $a0
-# 	move $s1, $a1
-	
-# 	# make_bi with length given
-# 	move $a0, $a1
-# 	jal make_bi
-# 	# Save address of bi in $s3
-# 	move $s3, $v0
-# 	# get size in $s2
-# 	lw $s2, 0($s3)
-
-# 	# s4 - points to the last byte in array
-# 	addi $s4, $v0, 3
-# 	add $s4, $s4, $s2
-
-# 	make_bi_from_str_loop_begin:
-# 		# if $s1 <= 0, break_loop
-# 		slti $t0, $s1, 1
-# 		# if ($s1 < 1) != 0, break_loop
-# 		bne $t0, $0, make_bi_from_str_break_loop
-# 		addi $s1, $s1, -1
-# 		# t2 - Address of character to copy
-# 		add $t2, $s0, $s1
-# 		# Load char into $a0
-# 		lb $a0, 0($t2)
-# 		# Convert to int
-# 		jal ascii_to_int
-# 		# Store int in the last byte in array
-# 		sb $v0, 0($s4)
-# 		addi $s4, $s4, -1
-# 		j make_bi_from_str_loop_begin
-
-# 	make_bi_from_str_break_loop:
-# 	# move $t0, $v0
-# 	# Return address of bi
-# 	move $v0, $s3
-# 	lw $s4, 20($sp)
-# 	lw $s3, 16($sp)
-# 	lw $s2, 12($sp)
-# 	lw $s1, 8($sp)
-# 	lw $s0, 4($sp)
-# 	lw $ra, 0($sp)
-# 	addi $sp, $sp, 24
-# 	jr $ra
 
 
 # Makes a big integer from a string
@@ -197,6 +141,132 @@ make_bi_from_str:
 	addi $sp, $sp, 32
 	jr $ra
 
+# $a0, $a1, $a2 are added
+# $v0 - Lower half of sum
+# $a0 - Upper half of sum (carry)
+add_3_words:
+	addu $t1, $a0, $a1
+	sltu $t0, $t1, $a0    # set carry-in bit
+	addu $v0, $t1, $a2
+	sltu $t2, $v0, $t1    # set carry-in bit
+	addu $a0, $t0, $t2     # Add carry bits
+	jr $ra
+
+# $a0 - first bi
+# $a1 - second bi
+add_bi_bi:
+	addi $sp, $sp, -32
+	sw $ra, 0($sp)
+	sw $s0, 4($sp)
+	sw $s1, 8($sp)
+	sw $s2, 12($sp)
+	sw $s3, 16($sp)
+	sw $s4, 20($sp)
+	sw $s5, 24($sp)
+	sw $s6, 28($sp)
+
+	move $s5, $a0
+	move $s6, $a1
+
+	# find sizes of bi
+	lw $s0, 0($a0)
+	lw $s1, 0($a1)
+	# put the bigger of the sizes in $s3
+	move $s3, $s1
+	slt $t0, $s3, $s0
+	# if $s3 not less than $s0, goto skip_if1
+	beq $t0, $0, add_bi_bi_skip_if1
+	move $s3, $s0
+	add_bi_bi_skip_if1:
+	addi $s3, $s3, 4
+	# make a new bi with this size + 4
+	move $a0, $s3
+	jal make_bi
+	move $s4, $v0
+	lw $s3, 0($v0)
+	# Make byte-sizes word-sizes
+	div $s0, $s0, 4
+	div $s1, $s1, 4
+	div $s3, $s3, 4
+
+	# Loop counter
+	move $s2, $0
+	move $a0, $0
+	# while s2 < s3
+	add_bi_bi_loop_begin:
+	slt $t0, $s2, $s3
+	beq $t0, $0, add_bi_bi_break_loop
+		# $a1, $a2 <= lw((4 * $s2 + 4)+($s<>))
+		# $a0 <= carry
+		mul $t0, $s2, 4
+		addi $t0, $t0, 4
+		move $a1, $0
+		move $a2, $0
+		# if s2 < s0, lw from $s5
+		slt $t1, $s2, $s0
+		beq $t1, $0, add_bi_bi_skip_else1
+			add $t1, $t0, $s5
+			lw $a1, 0($t1)
+		add_bi_bi_skip_else1:
+		# if s2 < s1, lw from $s6
+		slt $t1, $s2, $s1
+		beq $t1, $0, add_bi_bi_skip_else2
+			add $t1, $t0, $s6
+			lw $a2, 0($t1)
+		add_bi_bi_skip_else2:
+		# Store the sum in the new bi
+		addi $sp, $sp, -4
+		sw $t0, 0($sp)
+		jal add_3_words
+		lw $t0, 0($sp)
+		addi $sp, $sp, 4
+		# add $t1, $v0, $t0
+		# add $t1, $t1, $s4
+		# sw $t0, 0($t1)
+		add $t1, $t0, $s4
+		sw $v0, 0($t1)
+		addi $s2, $s2, 1
+		j add_bi_bi_loop_begin
+	add_bi_bi_break_loop:
+	move $v0, $s4
+	lw $s6, 28($sp)
+	lw $s5, 24($sp)
+	lw $s4, 20($sp)
+	lw $s3, 16($sp)
+	lw $s2, 12($sp)
+	lw $s1, 8($sp)
+	lw $s0, 4($sp)
+	lw $ra, 0($sp)
+	addi $sp, $sp, 32
+	jr $ra
+
+# $a0 - address of bi
+print_bi:
+	addi $sp, $sp, -12
+	sw $ra, 0($sp)
+	sw $s0, 4($sp)
+	sw $s1, 8($sp)
+	move $s1, $a0
+	# load last byte address into $s0
+	lw $s0, 0($s0)
+	add $s0, $s0, $s1
+	# while s1 < s0, print 0($s1)
+	print_bi_loop1:
+	slt $t0, $s1, $s0
+	beq $t0, $0, print_bi_break_loop
+	# Print last byte
+	lw $a0, 0($s0)
+	li $v0, 34
+	syscall
+	addi $s0, $s0, -4
+	j print_bi_loop1
+	print_bi_break_loop:
+	lw $s1, 8($sp)
+	lw $s0, 4($sp)
+	lw $ra, 0($sp)
+	addi $sp, $sp, -12
+	jr $ra
+
 
 main:
       #la $a0, ch
@@ -205,10 +275,23 @@ main:
       #jal make_bi_100
       #jal make_bi_100
       la $a0, bi_a
-      la $a1, len
+      la $a1, len_a
       lw $a1, 0($a1)
       jal make_bi_from_str
-      lw $a0, 4($v0)
-      addi $a0, $a0, -1
+      move $s0, $v0
+      
+      move $a0, $s0
+      jal print_bi
+
+      la $a0, bi_b
+      la $a1, len_b
+      lw $a1, 0($a1)
+      jal make_bi_from_str
+      move $s1, $v0
+      
+      move $a0, $s0
+      move $a1, $s1
+      jal add_bi_bi
+      
 	li   $v0, 10          # system call for exit
 	syscall

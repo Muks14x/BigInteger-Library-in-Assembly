@@ -1,20 +1,9 @@
 .data
-arr: 
-
-bi_0: .word 0 : 100
-bi_1: .word 0 : 100
-bi_2: .word 0 : 100
-bi_3: .word 0 : 100
-bi_4: .word 0 : 100
-bi_5: .word 0 : 100
-
-bi_t0: .word 0 : 100
-bi_t1: .word 0 : 100
-bi_t2: .word 0 : 100
-bi_t3: .word 0 : 100
-bi_t4: .word 0 : 100
-bi_t5: .word 0 : 100
-
+bi_a: .asciiz "0123456789abc"
+len_a: .word 13
+bi_b: .asciiz "11000000000000001"
+len_b: .word 17
+ch: .ascii "0"
 .text
 j main
 
@@ -252,20 +241,27 @@ add_bi_bi:
 	jr $ra
 
 
-sub_bi_bi:
-	jr $ra
-
-
-mult_bi_bi:
-	jr $ra
-
-
-comp_bi_bi:
-	jr $ra
-
-
 main:
-	la $t0, bi_a
-	la $t1, bi_b
-	
-	
+      #la $a0, ch
+      #lb $a0, 0($a0)
+      #jal ascii_to_int
+      #jal make_bi_100
+      #jal make_bi_100
+      la $a0, bi_a
+      la $a1, len_a
+      lw $a1, 0($a1)
+      jal make_bi_from_str
+      move $s0, $v0
+
+      la $a0, bi_b
+      la $a1, len_b
+      lw $a1, 0($a1)
+      jal make_bi_from_str
+      move $s1, $v0
+      
+      move $a0, $s0
+      move $a1, $s1
+      jal add_bi_bi
+      
+	li   $v0, 10          # system call for exit
+	syscall
