@@ -1,14 +1,23 @@
 .data
 
-bi_a: .asciiz "100000000000"
-len_a: .word 6
-bi_b: .asciiz "fffff"
-len_b: .word 1
+bi_a: .asciiz "1000000000000"
+bi_b: .asciiz "200000000000"
 
-bi_a: .asciiz "10000"
-len_a: .word 6
-bi_b: .asciiz "100000"
-len_b: .word 1
+a_is: .asciiz "A is:\n"
+b_is: .asciiz "B is:\n"
+
+equal_str: .asciiz "A == B is "
+lt_str: .asciiz "A < B is "
+lte_str: .asciiz "A <= B is "
+gt_str: .asciiz "A > B is "
+gte_str: .asciiz "A >= B is "
+
+true_str: .asciiz "True\n"
+false_str: .asciiz "False\n"
+
+sum_str: .asciiz "Sum is: \n"
+diff_str: .asciiz "Difference is: \n"
+prod_str: .asciiz "Product is: \n"
 
 
 .text
@@ -153,10 +162,10 @@ make_bi_from_str:
 # $a0 - Upper half of sum (carry)
 add_3_words:
 	addu $t1, $a0, $a1
-	sltu $t0, $t1, $a0    # set carry-in bit
+	sltu $t0, $t1, $a0	# set carry-in bit
 	addu $v0, $t1, $a2
-	sltu $t2, $v0, $t1    # set carry-in bit
-	addu $a0, $t0, $t2     # Add carry bits
+	sltu $t2, $v0, $t1	# set carry-in bit
+	addu $a0, $t0, $t2	 # Add carry bits
 	jr $ra
 
 
@@ -615,3 +624,175 @@ comp_bi_bi:
 	lw $ra, 0($sp)
 	addi $sp, $sp, 24
 	jr $ra
+
+
+newline:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	# Print a newline
+	li $a0, '\n'
+	li $v0, 11
+	syscall
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+
+
+# Find the string length of a null-terminated string
+# $a0 - string address
+str_len:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+
+	move $t0, $a0
+	str_len_loop:
+		lb $t1, 0($t0)
+		beq $t1, $0, str_len_end
+		addi $t0, $t0, 1
+		j str_len_loop
+
+	str_len_end:
+	subu $v0, $t0, $a0
+
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4	
+	jr $ra
+
+# $a0 - if 0, prints false, else true
+print_true_false:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+
+	beq $a0, $0, print_false
+		la $a0, true_str
+	j skip_print_false
+	print_false:
+		la $a0, false_str
+	skip_print_false:
+	addi $v0, $0, 4
+	syscall		
+
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+
+
+main:
+	# Make big integers from strings bi_a, and bi_b
+	la $a0, bi_a
+	jal str_len
+	move $a1, $v0
+	la $a0, bi_a
+	jal make_bi_from_str
+	move $s0, $v0
+
+	la $a0, bi_b
+	jal str_len
+	move $a1, $v0
+	la $a0, bi_b
+	jal make_bi_from_str
+	move $s1, $v0
+
+	# Print bi_a
+
+	la $a0, a_is
+	addi $v0, $0, 4
+	syscall
+
+	move $a0, $s0
+	jal print_bi
+	jal newline
+
+	# Print bi_b
+
+	la $a0, b_is
+	addi $v0, $0, 4
+	syscall
+
+	move $a0, $s1
+	jal print_bi
+	jal newline
+
+	# Compare a, b
+	move $a0, $s0
+	move $a1, $s1
+	jal comp_bi_bi
+	move $t0, $v0
+	move $t1, $a0
+	move $t2, $a1
+	move $t3, $a2
+	move $t4, $a3
+
+	la $a0, equal_str
+	addi $v0, $0, 4
+	syscall
+
+	move $a0, $t0
+	jal print_true_false
+
+	la $a0, lt_str
+	addi $v0, $0, 4
+	syscall
+
+	move $a0, $t1
+	jal print_true_false
+
+	la $a0, gt_str
+	addi $v0, $0, 4
+	syscall
+
+	move $a0, $t2
+	jal print_true_false
+
+	la $a0, lte_str
+	addi $v0, $0, 4
+	syscall
+
+	move $a0, $t3
+	jal print_true_false
+
+	la $a0, gte_str
+	addi $v0, $0, 4
+	syscall
+
+	move $a0, $t4
+	jal print_true_false
+
+	# Sum of a, b
+
+	la $a0, sum_str
+	addi $v0, $0, 4
+	syscall
+
+	move $a0, $s0
+	move $a1, $s1
+	jal add_bi_bi
+	move $a0, $v0
+	jal print_bi
+	jal newline
+
+	# Difference of a, b
+
+	la $a0, diff_str
+	addi $v0, $0, 4
+	syscall
+
+	move $a0, $s0
+	move $a1, $s1
+	jal sub_bi_bi
+	move $a0, $v0
+	jal print_bi
+	jal newline
+
+	# Product of a, b
+
+	la $a0, prod_str
+	addi $v0, $0, 4
+	syscall
+
+	move $a0, $s0
+	move $a1, $s1
+	jal mult_bi_bi
+	move $a0, $v0
+	jal print_bi
+	jal newline

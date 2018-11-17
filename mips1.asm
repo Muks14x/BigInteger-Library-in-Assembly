@@ -632,22 +632,64 @@ str_len:
 	jr $ra
 
 
+
+newline:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	# Print a newline
+	li $a0, '\n'
+	li $v0, 11
+	syscall
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+
 main:
       #la $a0, ch
       #lb $a0, 0($a0)
       #jal ascii_to_int
       #jal make_bi_100
       #jal make_bi_100
+	# Make big integers from strings bi_a, and bi_b
+	la $a0, bi_a
+	jal str_len
+	move $a1, $v0
+	la $a0, bi_a
+	jal make_bi_from_str
+	move $s0, $v0
+
+	la $a0, bi_b
+	jal str_len
+	move $a1, $v0
+	la $a0, bi_b
+	jal make_bi_from_str
+	move $s1, $v0
+
+	# Print bi_a
+	move $a0, $s0
+	jal print_bi
+	jal newline
+
+	# Print bi_b
+	move $a0, $s1
+	jal print_bi
+	jal newline
+	j exit      
+      
+      
+      
       la $a0, bi_a
       jal str_len
       move $a1, $v0
       la $a0, bi_a
       jal make_bi_from_str
       move $s0, $v0
-      j exit
       
       move $a0, $s0
-      #jal print_bi
+      jal print_bi
+      jal newline
+      jal print_bi
+      j exit
       #jal set_bi_zero
 
       la $a0, bi_b
