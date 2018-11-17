@@ -1,5 +1,16 @@
 .data
 
+bi_a: .asciiz "100000000000"
+len_a: .word 6
+bi_b: .asciiz "fffff"
+len_b: .word 1
+
+bi_a: .asciiz "10000"
+len_a: .word 6
+bi_b: .asciiz "100000"
+len_b: .word 1
+
+
 .text
 j main
 
@@ -595,7 +606,7 @@ comp_bi_bi:
 	j comp_bi_bi_return
 
 	comp_bi_bi_return:
-
+	
 	lw $s4, 20($sp)
 	lw $s3, 16($sp)
 	lw $s2, 12($sp)
@@ -604,23 +615,3 @@ comp_bi_bi:
 	lw $ra, 0($sp)
 	addi $sp, $sp, 24
 	jr $ra
-
-# Find the string length of a null-terminated string
-# $a0 - string address
-str_len:
-	move $t0, $a0
-	str_len_loop:
-		lb $t1, 0($t0)
-		beq $t1, $0, str_len_end
-		addi $t0, $t0, 1
-		j str_len_loop
-
-	str_len_end:
-	subu $v0, $t0, $a0
-	jr $ra
-
-main:
-	la $t0, bi_a
-	la $t1, bi_b
-	
-	

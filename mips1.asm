@@ -2,8 +2,8 @@
 #bi_a: .asciiz "0123456789abc"
 #bi_a: .asciiz "1111111111111"
 #len_a: .word 13
-bi_a: .asciiz "100000"
-len_a: .word 6
+bi_a: .asciiz "100000000"
+#len_a: .word 6
 bi_b: .asciiz "1"
 len_b: .word 1
 
@@ -617,6 +617,19 @@ comp_bi_bi:
 	addi $sp, $sp, 24
 	jr $ra
 
+# Find the string length of a null-terminated string
+# $a0 - string address
+str_len:
+	move $t0, $a0
+	str_len_loop:
+		lb $t1, 0($t0)
+		beq $t1, $0, str_len_end
+		addi $t0, $t0, 1
+		j str_len_loop
+
+	str_len_end:
+	subu $v0, $t0, $a0
+	jr $ra
 
 
 main:
@@ -626,10 +639,12 @@ main:
       #jal make_bi_100
       #jal make_bi_100
       la $a0, bi_a
-      la $a1, len_a
-      lw $a1, 0($a1)
+      jal str_len
+      move $a1, $v0
+      la $a0, bi_a
       jal make_bi_from_str
       move $s0, $v0
+      j exit
       
       move $a0, $s0
       #jal print_bi
