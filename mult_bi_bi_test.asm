@@ -1,7 +1,7 @@
 .data
 
-bi_a: .asciiz "1000000000000"
-bi_b: .asciiz "2000000000000"
+bi_a: .asciiz "10000"
+bi_b: .asciiz "200000000"
 
 a_is: .asciiz "A is:\n"
 b_is: .asciiz "B is:\n"
@@ -713,73 +713,15 @@ main:
 	jal print_bi
 	jal newline
 
-	# Compare a, b
-	move $a0, $s0
-	move $a1, $s1
-	jal comp_bi_bi
-	move $t0, $v0
-	move $t1, $a0
-	move $t2, $a1
-	move $t3, $a2
-	move $t4, $a3
+	# Product of a, b
 
-	la $a0, equal_str
-	addi $v0, $0, 4
-	syscall
-
-	move $a0, $t0
-	jal print_true_false
-
-	la $a0, lt_str
-	addi $v0, $0, 4
-	syscall
-
-	move $a0, $t1
-	jal print_true_false
-
-	la $a0, gt_str
-	addi $v0, $0, 4
-	syscall
-
-	move $a0, $t2
-	jal print_true_false
-
-	la $a0, lte_str
-	addi $v0, $0, 4
-	syscall
-
-	move $a0, $t3
-	jal print_true_false
-
-	la $a0, gte_str
-	addi $v0, $0, 4
-	syscall
-
-	move $a0, $t4
-	jal print_true_false
-
-	# Sum of a, b
-
-	la $a0, sum_str
+	la $a0, prod_str
 	addi $v0, $0, 4
 	syscall
 
 	move $a0, $s0
 	move $a1, $s1
-	jal add_bi_bi
-	move $a0, $v0
-	jal print_bi
-	jal newline
-
-	# Difference of a, b
-
-	la $a0, diff_str
-	addi $v0, $0, 4
-	syscall
-
-	move $a0, $s0
-	move $a1, $s1
-	jal sub_bi_bi
+	jal mult_bi_bi
 	move $a0, $v0
 	jal print_bi
 	jal newline
