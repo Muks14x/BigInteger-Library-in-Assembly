@@ -1,7 +1,7 @@
 .data
 
-bi_a: .asciiz "1000000000000"
-bi_b: .asciiz "2000000000000"
+bi_a: .asciiz "1111111111111"
+bi_b: .asciiz "22222222222222222"
 
 a_is: .asciiz "A is:\n"
 b_is: .asciiz "B is:\n"
