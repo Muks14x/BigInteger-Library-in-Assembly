@@ -9,7 +9,7 @@ make_bi:
 	# addi $a0, $a0, 1
 	addi $a0, $a0, -1
 	div $a0, $a0, 4
-	mul $a0, $a0, 4
+	mulu $a0, $a0, 4
 	# convert to next 4 multiple, add 4 for storing size
 	addi $a0, $a0, 8
 	li	$v0,9			# To allocate a block of memory
@@ -33,14 +33,14 @@ make_bi_100:
 # $a0 - stores character to convert
 ascii_to_int:
 	li $t1, 97
-	slt $t0, $a0, $t1
+	sltu $t0, $a0, $t1
 	bne $t0, 0, ascii_to_int_if2
 	addi $v0, $a0, -87
 	jr $ra
 
 	ascii_to_int_if2:
 	li $t1, 65
-	slt $t0, $a0, $t1
+	sltu $t0, $a0, $t1
 	bne $t0, 0, ascii_to_int_if3
 	addi $v0, $a0, -55
 	jr $ra
@@ -106,7 +106,7 @@ make_bi_from_str:
 		# Store int in the last byte of array if parity bit is 0
 		bne $s5, $0, make_bi_from_str_else1
 			lb $t0, 0($s4)
-			mul $v0, $v0, 16
+			mulu $v0, $v0, 16
 			add $t0, $t0, $v0
 			sb $t0, 0($s4)
 			li $s5, 1
@@ -161,7 +161,7 @@ print_bi:
 	add $s0, $s0, $s1
 	# while s1 < s0, print 0($s0)
 	print_bi_loop1:
-	slt $t0, $s1, $s0
+	sltu $t0, $s1, $s0
 	beq $t0, $0, print_bi_break_loop
 	# Print last word
 	lw $a0, 0($s0)
@@ -193,7 +193,7 @@ set_bi_zero:
 	add $s0, $s0, $s1
 	# while s1 < s0, set 0($s0) to 0
 	set_bi_loop1:
-	slt $t0, $s1, $s0
+	sltu $t0, $s1, $s0
 	beq $t0, $0, set_bi_break_loop
 	# Set last byte to 0
 	sw $0, 0($s0)
@@ -229,7 +229,7 @@ add_bi_bi:
 	lw $s1, 0($a1)
 	# put the bigger of the sizes in $s3
 	move $s3, $s1
-	slt $t0, $s3, $s0
+	sltu $t0, $s3, $s0
 	# if $s3 not less than $s0, goto skip_if1
 	beq $t0, $0, add_bi_bi_skip_if1
 	move $s3, $s0
@@ -250,22 +250,22 @@ add_bi_bi:
 	move $a0, $0
 	# while s2 < s3
 	add_bi_bi_loop_begin:
-	slt $t0, $s2, $s3
+	sltu $t0, $s2, $s3
 	beq $t0, $0, add_bi_bi_break_loop
 		# $a1, $a2 <= lw((4 * $s2 + 4)+($s<>))
 		# $a0 <= carry
-		mul $t0, $s2, 4
+		mulu $t0, $s2, 4
 		addi $t0, $t0, 4
 		move $a1, $0
 		move $a2, $0
 		# if s2 < s0, lw from $s5
-		slt $t1, $s2, $s0
+		sltu $t1, $s2, $s0
 		beq $t1, $0, add_bi_bi_skip_else1
 			add $t1, $t0, $s5
 			lw $a1, 0($t1)
 		add_bi_bi_skip_else1:
 		# if s2 < s1, lw from $s6
-		slt $t1, $s2, $s1
+		sltu $t1, $s2, $s1
 		beq $t1, $0, add_bi_bi_skip_else2
 			add $t1, $t0, $s6
 			lw $a2, 0($t1)
@@ -296,7 +296,56 @@ add_bi_bi:
 	addi $sp, $sp, 32
 	jr $ra
 
+# $a0 - first bi
+# $a1 - second bi
 sub_bi_bi:
+	addi $sp, $sp, -36
+	sw $ra, 0($sp)
+	sw $s0, 4($sp)
+	sw $s1, 8($sp)
+	sw $s2, 12($sp)
+	sw $s3, 16($sp)
+	sw $s4, 20($sp)
+	sw $s5, 24($sp)
+	sw $s6, 28($sp)
+	sw $s7, 32($sp)
+
+	move $s5, $a0
+	move $s6, $a1
+
+	# find sizes of bi
+	lw $s0, 0($a0)
+	lw $s1, 0($a1)
+
+	# put the bigger of the sizes in $s3
+	move $s3, $s1
+	sltu $t0, $s3, $s0
+	
+	# if $s3 not less than $s0, goto skip_if1
+	beq $t0, $0, sub_bi_bi_skip_if1
+	move $s3, $s0
+	sub_bi_bi_skip_if1:
+	# addi $s3, $s3, 4
+	
+	# make a new bi with this size max(len1, len2)
+	move $a0, $s3
+	jal make_bi
+	move $s4, $v0
+	lw $s3, 0($v0)
+
+	# 
+
+
+	lw $s7, 32($sp)
+	lw $s6, 28($sp)
+	lw $s5, 24($sp)
+	lw $s4, 20($sp)
+	lw $s3, 16($sp)
+	lw $s2, 12($sp)
+	lw $s1, 8($sp)
+	lw $s0, 4($sp)
+	lw $ra, 0($sp)
+	addi $sp, $sp, 36
 	jr $ra
 
 # $a0 - first bi
@@ -339,7 +388,7 @@ mult_bi_bi:
 	li $s6, 0
 	# while $s6 < $s3, i++
 	mult_bi_bi_outer_loop_begin:
-	slt $t0, $s6, $s3
+	sltu $t0, $s6, $s3
 	beq $t0, $0, mult_bi_bi_after_outer_loop
 		# incrementing in the beginning, 
 		#  since array access is 1 indexed
@@ -353,7 +402,7 @@ mult_bi_bi:
 		move $s7, $0
 		# while $s7 < $s3, ++j
 		mult_bi_bi_inner_loop_begin:
-		slt $t0, $s7, $s4
+		sltu $t0, $s7, $s4
 		beq $t0, $0, mult_bi_bi_after_inner_loop
 			# incrementing in the beginning, 
 			#  since array access is 1 indexed
@@ -362,7 +411,7 @@ mult_bi_bi:
 			# a2 - digit from s1
 			lw $a2, 0($t1)
 			# a2 - lo of product
-			mul $a2, $t2, $a2
+			mulu $a2, $t2, $a2
 			# t5 - hi of product
 			mfhi $t5
 			# a1 : address and then data of the 
@@ -386,7 +435,7 @@ mult_bi_bi:
 			addi $a1, $a1, -4
 			sw $v0, 0($a1)
 
-			# Add carry from mul to current carry
+			# Add carry from mulu to current carry
 			add $a0, $a0, $t5
 		j mult_bi_bi_inner_loop_begin
 		mult_bi_bi_after_inner_loop:
@@ -408,8 +457,88 @@ mult_bi_bi:
 	addi $sp, $sp, 36
 	jr $ra
 
-
+# $a0 - first bi
+# $a1 - second bi
+# Return:
+# $v0 - Equal, $a0 - LT, $a1 - GT
+# $a2 - LTE, $a3 - GTE
 comp_bi_bi:
+	addi $sp, $sp, -24
+	sw $ra, 0($sp)
+	sw $s0, 4($sp)
+	sw $s1, 8($sp)
+	sw $s2, 12($sp)
+	sw $s3, 16($sp)
+	sw $s4, 20($sp)
+
+	move $s0, $a0
+	move $s1, $a1
+	# get the two sizes
+	lw $s2, 0($s0)
+	lw $s3, 0($s1)
+
+	# Compare lengths, return if one is greater
+	sltu $t0, $s2, $s3
+	bne $t0, $0, comp_bi_bi_gt_return
+	sltu $t0, $s3, $s2
+	bne $t0, $0, comp_bi_bi_lt_return
+
+	# This code runs if lengths are equal
+	# i = l1
+	move $s4, $s2
+	comp_bi_bi_loop_begin:
+	# if i <= 0 (if (i > 0) == 0), return 'equal'
+		sgtu $t0, $s4, $0
+		beq $t0, $0, comp_bi_bi_eq_return
+		# ith word from first bi
+		add $t1, $s0, $s4 
+		lw $t1, 0($t1)
+		# ith word from second bi
+		add $t2, $s1, $s4
+		lw $t2, 0($t2)
+		# if $t1 < $t2, return lt
+		slt $t0, $t1, $t2
+		bne $t0, $0, comp_bi_bi_lt_return
+		# if $t2 < $t1, return gt
+		slt $t0, $t2, $t1
+		bne $t0, $0, comp_bi_bi_gt_return
+
+		# else continue looping (they're equal)
+		addi $s4, $s4, -4
+		j comp_bi_bi_loop_begin
+
+	comp_bi_bi_lt_return:
+	li $v0, 0 # Eq
+	li $a0, 1 # LT
+	li $a1, 0 # GT
+	li $a2, 1 # LTE
+	li $a3, 0 # GTE
+	j comp_bi_bi_return
+
+	comp_bi_bi_gt_return:
+	li $v0, 0 # Eq
+	li $a0, 0 # LT
+	li $a1, 1 # GT
+	li $a2, 0 # LTE
+	li $a3, 1 # GTE
+	j comp_bi_bi_return
+
+	comp_bi_bi_eq_return:
+	li $v0, 1 # Eq
+	li $a0, 0 # LT
+	li $a1, 0 # GT
+	li $a2, 1 # LTE
+	li $a3, 1 # GTE
+	j comp_bi_bi_return
+
+	comp_bi_bi_return:
+	lw $s4, 20($sp)
+	lw $s3, 16($sp)
+	lw $s2, 12($sp)
+	lw $s1, 8($sp)
+	lw $s0, 4($sp)
+	lw $ra, 0($sp)
+	addi $sp, $sp, 36
 	jr $ra
 
 
