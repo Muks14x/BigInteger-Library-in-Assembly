@@ -2,10 +2,10 @@
 #bi_a: .asciiz "0123456789abc"
 #bi_a: .asciiz "1111111111111"
 #len_a: .word 13
-bi_a: .asciiz "22222222222222221"
-len_a: .word 17
-bi_b: .asciiz "22222222222222222"
-len_b: .word 17
+bi_a: .asciiz "100000"
+len_a: .word 6
+bi_b: .asciiz "1"
+len_b: .word 1
 
 #bi_a: .asciiz "10"
 #len_a: .word 2
@@ -323,30 +323,93 @@ sub_bi_bi:
 	sw $s6, 28($sp)
 	sw $s7, 32($sp)
 
-	move $s5, $a0
-	move $s6, $a1
+	move $s0, $a0
+	move $s1, $a1
 
+	# $a0, $a1 - still have the bi's
+	jal comp_bi_bi
+	# If not (bi1 < bi2), dont swap them
+	beq $a0, $0, sub_bi_bi_skip_swap_bis
+
+	# swap $s0 and $s1
+	xor $s0, $s0, $s1
+	xor $s1, $s0, $s1
+	xor $s0, $s0, $s1
+
+	sub_bi_bi_skip_swap_bis:
 	# find sizes of bi
-	lw $s0, 0($a0)
-	lw $s1, 0($a1)
+	lw $s3, 0($s0) # l1
+	lw $s4, 0($s1) # l2
 
-	# put the bigger of the sizes in $s3
-	move $s3, $s1
-	sltu $t0, $s3, $s0
-	
-	# if $s3 not less than $s0, goto skip_if1
-	beq $t0, $0, sub_bi_bi_skip_if1
-	move $s3, $s0
-	sub_bi_bi_skip_if1:
-	addi $s3, $s3, 4
-	
-	# make a new bi with this size
+	# make a new bi with size l1
 	move $a0, $s3
 	jal make_bi
-	move $s4, $v0
-	lw $s3, 0($v0)
+	move $s2, $v0
 
-	# 
+	# s0, s1, s2 : bi_1, bi_2, result_bi
+	# s3 : l1; s4 : l2
+	# (s5) i = 0
+	move $s5, $0
+	# (s6) borrow = 0
+	move $s6, $0
+
+	# while i < l1
+	sub_bi_bi_loop_begin:
+	sltu $t0, $s5, $s3
+	# Break if i < l1 isn't true (if i < l1 == 0)
+	beq $t0, $0, sub_bi_bi_loop_break
+	# (t3) n1 = s0[i]
+	addu $t3, $s0, $s5
+	addi $t3, $t3, 4
+	lb $t3, 0($t3)
+	
+	# (t4) n2 = 0
+	move $t4, $0
+	# if i < l2:
+	sltu $t0, $s5, $s4
+	beq $t0, $0, sub_bi_bi_skip_copy_s1_i
+		# (t4) n2 = s1[i]
+		addu $t4, $s1, $s5
+		addi $t4, $t4, 4
+		lb $t4, 0($t4)
+	sub_bi_bi_skip_copy_s1_i:
+
+	# n2 += borrow
+	addu $t4, $t4, $s6
+
+	# if n1 >= n2 ::: if not(n1 < n2)
+	sltu $t0, $t3, $t4
+	bne $t0, $0, sub_bi_bi_else
+		# n1 - n2
+		subu $t1, $t3, $t4
+		# address of s2[i]
+		add $t5, $s2, $s5
+		addi $t5, $t5, 4
+		# s2[i] = n1 - n2
+		sb $t1, 0($t5)
+		# borrow = 0
+		move $s6, $0
+		j sub_bi_bi_skip_else
+	sub_bi_bi_else:
+	# else:
+		# 256 + n1 - n2
+		addi $t1, $t3, 256
+		subu $t1, $t1, $t4
+		# address of s2[i]
+		add $t5, $s2, $s5
+		addi $t5, $t5, 4
+		# s2[i] = 256 + n1 - n2
+		sb $t1, 0($t5)
+		# borrow = 1
+		li $s6, 1
+	sub_bi_bi_skip_else:
+	# i++
+	addi $s5, $s5, 1
+	j sub_bi_bi_loop_begin
+	sub_bi_bi_loop_break:
+
+	# Return $s2
+	move $v0, $s2
 
 	lw $s7, 32($sp)
 	lw $s6, 28($sp)
@@ -492,9 +555,9 @@ comp_bi_bi:
 
 	# Compare lengths, return if one is greater
 	sltu $t0, $s2, $s3
-	bne $t0, $0, comp_bi_bi_gt_return
-	sltu $t0, $s3, $s2
 	bne $t0, $0, comp_bi_bi_lt_return
+	sltu $t0, $s3, $s2
+	bne $t0, $0, comp_bi_bi_gt_return
 
 	# This code runs if lengths are equal
 	# i = l1
@@ -551,7 +614,7 @@ comp_bi_bi:
 	lw $s1, 8($sp)
 	lw $s0, 4($sp)
 	lw $ra, 0($sp)
-	addi $sp, $sp, 36
+	addi $sp, $sp, 24
 	jr $ra
 
 
@@ -581,9 +644,11 @@ main:
       move $a0, $s0
       move $a1, $s1
       # jal add_bi_bi
-      jal comp_bi_bi
+      #jal comp_bi_bi
       #jal mult_bi_bi
-      j exit
+      jal sub_bi_bi
+      #j exit
+      
       move $s2, $v0
       move $a0, $v0
       jal print_bi
