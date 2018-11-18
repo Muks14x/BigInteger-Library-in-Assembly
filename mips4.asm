@@ -522,6 +522,12 @@ mult_bi_bi:
 			add $a0, $a0, $t5
 		j mult_bi_bi_inner_loop_begin
 		mult_bi_bi_after_inner_loop:
+		
+		# Store carry in last element of result
+		add $a1, $s2, $s6
+		add $a1, $a1, $s7
+		sw $a0, 0($a1)
+
 		j mult_bi_bi_outer_loop_begin
 	mult_bi_bi_after_outer_loop:
 
