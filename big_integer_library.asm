@@ -227,7 +227,6 @@ set_bi_zero:
 	jr $ra
 
 
-
 # $a0 - first bi
 # $a1 - second bi
 add_bi_bi:
@@ -315,6 +314,7 @@ add_bi_bi:
 	lw $ra, 0($sp)
 	addi $sp, $sp, 32
 	jr $ra
+
 
 # $a0 - first bi
 # $a1 - second bi
@@ -546,6 +546,7 @@ mult_bi_bi:
 	addi $sp, $sp, 36
 	jr $ra
 
+
 # $a0 - first bi
 # $a1 - second bi
 # Return:
@@ -663,6 +664,7 @@ str_len:
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4	
 	jr $ra
+
 
 # $a0 - if 0, prints false, else true
 print_true_false:
